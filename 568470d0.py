@@ -4,32 +4,62 @@ import streamlit as st
 
 st.set_page_config(page_title="GeoPro Camp Companion", page_icon="🏕️", layout="centered")
 DATA_FILE = Path('output/geopro_data.json')
-DEFAULT_VERSION = "0.6 polished compact"
+DEFAULT_VERSION = "0.8 compact rows fixed"
 
 DEFAULT_DATA = {
     "version": DEFAULT_VERSION,
     "checklists": {
-        "Travel": [{"text": "Hitch up trailer", "done": False}, {"text": "Check tire pressure", "done": False}, {"text": "Secure loose items", "done": False}],
-        "Camp Setup": [{"text": "Level trailer", "done": False}, {"text": "Connect power", "done": False}, {"text": "Connect water", "done": False}, {"text": "Connect sewer", "done": False}],
-        "Camp Tear Down": [{"text": "Disconnect utilities", "done": False}, {"text": "Stow awning", "done": False}, {"text": "Secure interior", "done": False}],
-        "Dumping": [{"text": "Gloves on", "done": False}, {"text": "Black tank first", "done": False}, {"text": "Flush hose", "done": False}, {"text": "Stow hose", "done": False}],
-        "Winterizing": [{"text": "Drain fresh tank", "done": False}, {"text": "Bypass water heater", "done": False}, {"text": "Add antifreeze", "done": False}, {"text": "Protect battery", "done": False}],
-        "Dewinterizing": [{"text": "Flush lines", "done": False}, {"text": "Sanitize system", "done": False}, {"text": "Check leaks", "done": False}, {"text": "Test appliances", "done": False}],
+        "Travel": [
+            {"text": "Hitch up trailer", "done": False},
+            {"text": "Check tire pressure", "done": False},
+            {"text": "Secure loose items", "done": False},
+        ],
+        "Camp Setup": [
+            {"text": "Level trailer", "done": False},
+            {"text": "Connect power", "done": False},
+            {"text": "Connect water", "done": False},
+            {"text": "Connect sewer", "done": False},
+        ],
+        "Camp Tear Down": [
+            {"text": "Disconnect utilities", "done": False},
+            {"text": "Stow awning", "done": False},
+            {"text": "Secure interior", "done": False},
+        ],
+        "Dumping": [
+            {"text": "Gloves on", "done": False},
+            {"text": "Black tank first", "done": False},
+            {"text": "Flush hose", "done": False},
+            {"text": "Stow hose", "done": False},
+        ],
+        "Winterizing": [
+            {"text": "Drain fresh tank", "done": False},
+            {"text": "Bypass water heater", "done": False},
+            {"text": "Add antifreeze", "done": False},
+            {"text": "Protect battery", "done": False},
+        ],
+        "Dewinterizing": [
+            {"text": "Flush lines", "done": False},
+            {"text": "Sanitize system", "done": False},
+            {"text": "Check leaks", "done": False},
+            {"text": "Test appliances", "done": False},
+        ],
     },
     "gear": [
         {"item": "Water hose", "location": "Pass-through bin", "category": "Water", "packed": False, "open": False},
         {"item": "Sewer hose", "location": "Rear storage", "category": "Sewer", "packed": False, "open": False},
         {"item": "Wheel chocks", "location": "Front bin", "category": "Safety", "packed": False, "open": False},
     ],
-    "campgrounds": [{"name": "", "status": "Want to visit", "hookups": "", "level": "", "notes": ""}],
+    "campgrounds": [
+        {"name": "", "status": "Want to visit", "hookups": "", "level": "", "notes": ""}
+    ],
 }
 
 SAGE = "#A8D5BA"
 CANTALOUPE = "#E8B4A3"
 BORDER = "rgba(31,41,55,0.12)"
 TEXT = "#1F2937"
-MUTED = "#6B7280"
 CARD_BG = "rgba(255,255,255,0.86)"
+MUTED = "#6B7280"
 
 
 def deep_copy(obj):
@@ -67,8 +97,8 @@ st.markdown(f"""
   --cantaloupe: {CANTALOUPE};
   --border: {BORDER};
   --text: {TEXT};
-  --muted: {MUTED};
   --card: {CARD_BG};
+  --muted: {MUTED};
 }}
 html, body, [class*='css'] {{
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -77,38 +107,18 @@ html, body, [class*='css'] {{
   background: linear-gradient(180deg, rgba(168,213,186,0.10), rgba(255,255,255,0.0));
   color: var(--text);
 }}
-.stButton > button {
-    padding: 0.20rem 0.45rem !important;
-    min-height: 1.9rem !important;
-    font-size: 0.82rem !important;
-    border-radius: 999px !important;
-}
-.rowcard {
-    padding: 0.35rem 0.45rem !important;
-    margin-bottom: 0.30rem !important;
-}
-.itemtext {
-    font-size: 0.95rem !important;
-    line-height: 1.05 !important;
-}
-.gearpanel {
-    margin-top: 0.30rem !important;
-    padding: 0.40rem !important;
-}
-.smalllabel {
-    font-size: 0.74rem !important;
-    margin-bottom: 0.08rem !important;
-}
 .stButton > button {{
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: white;
-  padding: 0.32rem 0.72rem;
-  font-size: 0.93rem;
+  border-radius: 999px !important;
+  border: 1px solid var(--border) !important;
+  background: white !important;
+  padding: 0.20rem 0.45rem !important;
+  min-height: 1.9rem !important;
+  font-size: 0.82rem !important;
+  line-height: 1 !important;
 }}
 .stButton > button:hover {{
-  border-color: var(--sage);
-  background: rgba(168,213,186,0.10);
+  border-color: var(--sage) !important;
+  background: rgba(168,213,186,0.10) !important;
 }}
 button[kind='primary'] {{
   background: var(--sage) !important;
@@ -120,41 +130,33 @@ button[kind='primary']:hover {{
 }}
 .rowcard {{
   border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 0.55rem 0.65rem;
-  margin-bottom: 0.45rem;
+  border-radius: 16px;
+  padding: 0.30rem 0.35rem;
+  margin-bottom: 0.28rem;
   background: var(--card);
   box-shadow: 0 1px 8px rgba(0,0,0,0.03);
 }}
 .itemtext {{
-  font-size: 1rem;
-  line-height: 1.2;
-  flex: 1;
+  font-size: 0.92rem;
+  line-height: 1.0;
   word-break: break-word;
+  margin: 0;
+  padding: 0;
 }}
 .itemdone {{
   color: #9CA3AF;
-  text-decoration: none;
 }}
 .gearpanel {{
-  margin-top: 0.5rem;
-  padding: 0.55rem;
-  border-radius: 16px;
+  margin-top: 0.22rem;
+  padding: 0.32rem;
+  border-radius: 14px;
   border: 1px solid rgba(168,213,186,0.35);
   background: rgba(168,213,186,0.08);
 }}
 .smalllabel {{
   color: var(--muted);
-  font-size: 0.82rem;
-  margin-bottom: 0.15rem;
-}}
-.pill {{
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(232,180,163,0.16);
-  color: #6b4e45;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+  margin-bottom: 0.05rem;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -174,11 +176,11 @@ if menu == "Checklists":
         st.rerun()
 
     for i, item in enumerate(items):
-        row = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
-        done = row[0].checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
+        c1, c2, c3 = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
+        done = c1.checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
         item["done"] = done
-        row[1].markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
-        if row[2].button("E", key=f"edit_{selected}_{i}"):
+        c2.markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
+        if c3.button("E", key=f"edit_{selected}_{i}"):
             st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
 
         if st.session_state.edit_open.get(f"{selected}_{i}"):
@@ -194,8 +196,7 @@ if menu == "Checklists":
                 st.session_state.edit_open.pop(f"{selected}_{i}", None)
                 save_data()
                 st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
- 
+
     a, b = st.columns(2)
     if a.button("Clear checks"):
         for item in items:
@@ -218,26 +219,23 @@ elif menu == "Gear":
         st.rerun()
 
     for i, g in enumerate(data["gear"]):
-    row = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
-    g["packed"] = row[0].checkbox("", value=g.get("packed", False), key=f"gear_packed_{i}", label_visibility="collapsed")
-    if row[1].button(g.get("item", ""), key=f"gear_toggle_{i}"):
-        g["open"] = not g.get("open", False)
-        save_data()
-        st.rerun()
-    if row[2].button("X", key=f"gear_del_{i}"):
-        data["gear"].pop(i)
-        save_data()
-        st.rerun()
+        c1, c2, c3 = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
+        g["packed"] = c1.checkbox("", value=g.get("packed", False), key=f"gear_packed_{i}", label_visibility="collapsed")
+        if c2.button(g.get("item", ""), key=f"gear_toggle_{i}"):
+            g["open"] = not g.get("open", False)
+            save_data()
+            st.rerun()
+        if c3.button("X", key=f"gear_del_{i}"):
+            data["gear"].pop(i)
+            save_data()
+            st.rerun()
 
-    if g.get("open", False):
-        with st.container():
-            st.markdown("<div class='gearpanel'>", unsafe_allow_html=True)
-            c1, c2 = st.columns(2)
-            c1.markdown("<div class='smalllabel'>Category</div>", unsafe_allow_html=True)
-            g["category"] = c1.text_input("", value=g.get("category", ""), key=f"gear_cat_{i}", label_visibility="collapsed")
-            c2.markdown("<div class='smalllabel'>Location</div>", unsafe_allow_html=True)
-            g["location"] = c2.text_input("", value=g.get("location", ""), key=f"gear_loc_{i}", label_visibility="collapsed")
-            st.markdown("</div>", unsafe_allow_html=True)
+        if g.get("open", False):
+            c1a, c2a = st.columns(2)
+            c1a.markdown("<div class='smalllabel'>Category</div>", unsafe_allow_html=True)
+            g["category"] = c1a.text_input("", value=g.get("category", ""), key=f"gear_cat_{i}", label_visibility="collapsed")
+            c2a.markdown("<div class='smalllabel'>Location</div>", unsafe_allow_html=True)
+            g["location"] = c2a.text_input("", value=g.get("location", ""), key=f"gear_loc_{i}", label_visibility="collapsed")
 
     if st.button("Collapse all gear"):
         for g in data["gear"]:
