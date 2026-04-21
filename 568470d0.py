@@ -4,46 +4,15 @@ import streamlit as st
 
 st.set_page_config(page_title="GeoPro Camp Companion", page_icon="🏕️", layout="centered")
 DATA_FILE = Path('output/geopro_data.json')
-DEFAULT_VERSION = "0.8 compact rows fixed"
+DEFAULT_VERSION = "0.9 portrait adaptive"
 
 DEFAULT_DATA = {
     "version": DEFAULT_VERSION,
-    "checklists": {
-        "Travel": [
-            {"text": "Hitch up trailer", "done": False},
-            {"text": "Check tire pressure", "done": False},
-            {"text": "Secure loose items", "done": False},
-        ],
-        "Camp Setup": [
-            {"text": "Level trailer", "done": False},
-            {"text": "Connect power", "done": False},
-            {"text": "Connect water", "done": False},
-            {"text": "Connect sewer", "done": False},
-        ],
-        "Camp Tear Down": [
-            {"text": "Disconnect utilities", "done": False},
-            {"text": "Stow awning", "done": False},
-            {"text": "Secure interior", "done": False},
-        ],
-        "Dumping": [
-            {"text": "Gloves on", "done": False},
-            {"text": "Black tank first", "done": False},
-            {"text": "Flush hose", "done": False},
-            {"text": "Stow hose", "done": False},
-        ],
-        "Winterizing": [
-            {"text": "Drain fresh tank", "done": False},
-            {"text": "Bypass water heater", "done": False},
-            {"text": "Add antifreeze", "done": False},
-            {"text": "Protect battery", "done": False},
-        ],
-        "Dewinterizing": [
-            {"text": "Flush lines", "done": False},
-            {"text": "Sanitize system", "done": False},
-            {"text": "Check leaks", "done": False},
-            {"text": "Test appliances", "done": False},
-        ],
-    },
+    "checklists": [
+        {"text": "Hitch up trailer", "done": False},
+        {"text": "Check tire pressure", "done": False},
+        {"text": "Secure loose items", "done": False},
+    ],
     "gear": [
         {"item": "Water hose", "location": "Pass-through bin", "category": "Water", "packed": False, "open": False},
         {"item": "Sewer hose", "location": "Rear storage", "category": "Sewer", "packed": False, "open": False},
@@ -72,6 +41,12 @@ def load_data():
             data = json.loads(DATA_FILE.read_text())
             if "version" not in data:
                 data["version"] = DEFAULT_VERSION
+            if "checklists" not in data:
+                data["checklists"] = deep_copy(DEFAULT_DATA["checklists"])
+            if "gear" not in data:
+                data["gear"] = deep_copy(DEFAULT_DATA["gear"])
+            if "campgrounds" not in data:
+                data["campgrounds"] = deep_copy(DEFAULT_DATA["campgrounds"])
             return data
         except Exception:
             pass
@@ -112,8 +87,8 @@ html, body, [class*='css'] {{
   border: 1px solid var(--border) !important;
   background: white !important;
   padding: 0.20rem 0.45rem !important;
-  min-height: 1.9rem !important;
-  font-size: 0.82rem !important;
+  min-height: 1.85rem !important;
+  font-size: 0.78rem !important;
   line-height: 1 !important;
 }}
 .stButton > button:hover {{
@@ -131,13 +106,13 @@ button[kind='primary']:hover {{
 .rowcard {{
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 0.30rem 0.35rem;
-  margin-bottom: 0.28rem;
+  padding: 0.24rem 0.28rem;
+  margin-bottom: 0.22rem;
   background: var(--card);
   box-shadow: 0 1px 8px rgba(0,0,0,0.03);
 }}
 .itemtext {{
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   line-height: 1.0;
   word-break: break-word;
   margin: 0;
@@ -147,16 +122,30 @@ button[kind='primary']:hover {{
   color: #9CA3AF;
 }}
 .gearpanel {{
-  margin-top: 0.22rem;
-  padding: 0.32rem;
-  border-radius: 14px;
+  margin-top: 0.18rem;
+  padding: 0.24rem;
+  border-radius: 12px;
   border: 1px solid rgba(168,213,186,0.35);
   background: rgba(168,213,186,0.08);
 }}
 .smalllabel {{
   color: var(--muted);
-  font-size: 0.72rem;
-  margin-bottom: 0.05rem;
+  font-size: 0.68rem;
+  margin-bottom: 0.03rem;
+}}
+@media (max-width: 480px) {{
+  .itemtext {{
+    font-size: 0.82rem;
+  }}
+  .stButton > button {{
+    font-size: 0.72rem !important;
+    padding: 0.16rem 0.34rem !important;
+    min-height: 1.65rem !important;
+  }}
+  .rowcard {{
+    padding: 0.18rem 0.22rem;
+    margin-bottom: 0.18rem;
+  }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -167,47 +156,45 @@ menu = st.radio("Go to", ["Checklists", "Gear", "Campgrounds", "About"], horizon
 
 if menu == "Checklists":
     st.subheader("Checklists")
-    selected = st.selectbox("List", list(data["checklists"].keys()), label_visibility="collapsed")
-    items = data["checklists"][selected]
     new_item = st.text_input("Add item", placeholder="Add new checklist item")
     if st.button("Add item", type="primary") and new_item.strip():
-        items.append({"text": new_item.strip(), "done": False})
+        data["checklists"].append({"text": new_item.strip(), "done": False})
         save_data()
         st.rerun()
 
-    for i, item in enumerate(items):
+    for i, item in enumerate(data["checklists"]):
         c1, c2, c3 = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
-        done = c1.checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
+        done = c1.checkbox("", value=item.get("done", False), key=f"chk_{i}", label_visibility="collapsed")
         item["done"] = done
         c2.markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
-        if c3.button("E", key=f"edit_{selected}_{i}"):
-            st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
+        if c3.button("E", key=f"edit_{i}"):
+            st.session_state.edit_open[f"check_{i}"] = not st.session_state.edit_open.get(f"check_{i}", False)
 
-        if st.session_state.edit_open.get(f"{selected}_{i}"):
+        if st.session_state.edit_open.get(f"check_{i}"):
             e1, e2 = st.columns([0.85, 0.15], vertical_alignment="center")
-            edited = e1.text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
-            if e2.button("X", key=f"del_{selected}_{i}"):
-                items.pop(i)
-                st.session_state.edit_open.pop(f"{selected}_{i}", None)
+            edited = e1.text_input("", value=item["text"], key=f"editbox_{i}", label_visibility="collapsed")
+            if e2.button("X", key=f"del_{i}"):
+                data["checklists"].pop(i)
+                st.session_state.edit_open.pop(f"check_{i}", None)
                 save_data()
                 st.rerun()
-            if st.button("Save", key=f"save_{selected}_{i}") and edited.strip():
+            if st.button("Save", key=f"save_{i}") and edited.strip():
                 item["text"] = edited.strip()
-                st.session_state.edit_open.pop(f"{selected}_{i}", None)
+                st.session_state.edit_open.pop(f"check_{i}", None)
                 save_data()
                 st.rerun()
 
     a, b = st.columns(2)
     if a.button("Clear checks"):
-        for item in items:
+        for item in data["checklists"]:
             item["done"] = False
         for k in list(st.session_state.keys()):
-            if k.startswith(f"chk_{selected}_"):
+            if k.startswith("chk_"):
                 st.session_state[k] = False
         save_data()
         st.rerun()
     if b.button("Reset list"):
-        st.session_state.data["checklists"][selected] = deep_copy(DEFAULT_DATA["checklists"][selected])
+        data["checklists"] = deep_copy(DEFAULT_DATA["checklists"])
         save_data()
         st.rerun()
 
