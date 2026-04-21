@@ -4,7 +4,7 @@ import streamlit as st
 
 st.set_page_config(page_title="GeoPro Camp Companion", page_icon="🏕️", layout="centered")
 DATA_FILE = Path('output/geopro_data.json')
-DEFAULT_VERSION = "1.0 portrait adaptive fixed"
+DEFAULT_VERSION = "1.1 line 167 fix"
 
 DEFAULT_DATA = {
     "version": DEFAULT_VERSION,
@@ -66,6 +66,36 @@ def deep_copy(obj):
     return json.loads(json.dumps(obj))
 
 
+def normalize_item(x):
+    if isinstance(x, dict):
+        x.setdefault("text", str(x.get("text", "")))
+        x.setdefault("done", False)
+        return x
+    return {"text": str(x), "done": False}
+
+
+def normalize_gear(x):
+    if isinstance(x, dict):
+        x.setdefault("item", str(x.get("item", "")))
+        x.setdefault("location", str(x.get("location", "")))
+        x.setdefault("category", str(x.get("category", "")))
+        x.setdefault("packed", False)
+        x.setdefault("open", False)
+        return x
+    return {"item": str(x), "location": "", "category": "", "packed": False, "open": False}
+
+
+def normalize_campground(x):
+    if isinstance(x, dict):
+        x.setdefault("name", str(x.get("name", "")))
+        x.setdefault("status", str(x.get("status", "Want to visit")))
+        x.setdefault("hookups", str(x.get("hookups", "")))
+        x.setdefault("level", str(x.get("level", "")))
+        x.setdefault("notes", str(x.get("notes", "")))
+        return x
+    return {"name": str(x), "status": "Want to visit", "hookups": "", "level": "", "notes": ""}
+
+
 def load_data():
     if DATA_FILE.exists():
         try:
@@ -73,9 +103,16 @@ def load_data():
             if not isinstance(data, dict):
                 return deep_copy(DEFAULT_DATA)
             data.setdefault("version", DEFAULT_VERSION)
-            data.setdefault("checklists", deep_copy(DEFAULT_DATA["checklists"]))
-            data.setdefault("gear", deep_copy(DEFAULT_DATA["gear"]))
-            data.setdefault("campgrounds", deep_copy(DEFAULT_DATA["campgrounds"]))
+            data["checklists"] = data.get("checklists", deep_copy(DEFAULT_DATA["checklists"]))
+            if not isinstance(data["checklists"], dict):
+                data["checklists"] = deep_copy(DEFAULT_DATA["checklists"])
+            data["gear"] = [normalize_gear(x) for x in data.get("gear", deep_copy(DEFAULT_DATA["gear"])) if x is not None]
+            data["campgrounds"] = [normalize_campground(x) for x in data.get("campgrounds", deep_copy(DEFAULT_DATA["campgrounds"])) if x is not None]
+            for k, v in list(data["checklists"].items()):
+                if isinstance(v, list):
+                    data["checklists"][k] = [normalize_item(x) for x in v if x is not None]
+                else:
+                    data["checklists"][k] = deep_copy(DEFAULT_DATA["checklists"].get(k, []))
             return data
         except Exception:
             pass
@@ -93,21 +130,9 @@ if "edit_open" not in st.session_state:
     st.session_state.edit_open = {}
 
 data = st.session_state.data
-
-checklists = data.get("checklists")
-if not isinstance(checklists, dict):
-    checklists = deep_copy(DEFAULT_DATA["checklists"])
-    data["checklists"] = checklists
-
-gear_list = data.get("gear")
-if not isinstance(gear_list, list):
-    gear_list = deep_copy(DEFAULT_DATA["gear"])
-    data["gear"] = gear_list
-
-campgrounds = data.get("campgrounds")
-if not isinstance(campgrounds, list):
-    campgrounds = deep_copy(DEFAULT_DATA["campgrounds"])
-    data["campgrounds"] = campgrounds
+checklists = data["checklists"]
+gear_list = data["gear"]
+campgrounds = data["campgrounds"]
 
 st.markdown(f"""
 <style>
@@ -154,15 +179,15 @@ if menu == "Checklists":
 
     for i, item in enumerate(items):
         c1, c2, c3 = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
-        done = c1.checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
+        done = c1.checkbox("", value=bool(item.get("done", False)), key=f"chk_{selected}_{i}", label_visibility="collapsed")
         item["done"] = done
-        c2.markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
+        c2.markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item.get('text','')}</div>", unsafe_allow_html=True)
         if c3.button("E", key=f"edit_{selected}_{i}"):
             st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
 
         if st.session_state.edit_open.get(f"{selected}_{i}"):
             e1, e2 = st.columns([0.85, 0.15], vertical_alignment="center")
-            edited = e1.text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
+            edited = e1.text_input("", value=str(item.get("text", "")), key=f"editbox_{selected}_{i}", label_visibility="collapsed")
             if e2.button("X", key=f"del_{selected}_{i}"):
                 items.pop(i)
                 st.session_state.edit_open.pop(f"{selected}_{i}", None)
@@ -196,15 +221,8 @@ elif menu == "Gear":
         st.rerun()
 
     for i, g in enumerate(gear_list):
-        if not isinstance(g, dict):
-            gear_list[i] = {"item": str(g), "location": "", "category": "", "packed": False, "open": False}
-            g = gear_list[i]
-        g.setdefault("item", "")
-        g.setdefault("location", "")
-        g.setdefault("category", "")
-        g.setdefault("packed", False)
-        g.setdefault("open", False)
-
+        g = normalize_gear(g)
+        gear_list[i] = g
         c1, c2, c3 = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
         g["packed"] = c1.checkbox("", value=bool(g.get("packed", False)), key=f"gear_packed_{i}", label_visibility="collapsed")
         if c2.button(str(g.get("item", "")), key=f"gear_toggle_{i}"):
@@ -225,8 +243,7 @@ elif menu == "Gear":
 
     if st.button("Collapse all gear"):
         for g in gear_list:
-            if isinstance(g, dict):
-                g["open"] = False
+            g["open"] = False
         save_data()
         st.rerun()
 
@@ -237,9 +254,8 @@ elif menu == "Campgrounds":
         save_data()
         st.rerun()
     for i, cg in enumerate(campgrounds):
-        if not isinstance(cg, dict):
-            campgrounds[i] = {"name": str(cg), "status": "Want to visit", "hookups": "", "level": "", "notes": ""}
-            cg = campgrounds[i]
+        cg = normalize_campground(cg)
+        campgrounds[i] = cg
         with st.container(border=True):
             cg["name"] = st.text_input("Name", value=str(cg.get("name", "")), key=f"c_name_{i}")
             cg["status"] = st.radio("Status", ["Want to visit", "Visited"], index=0 if cg.get("status", "Want to visit") == "Want to visit" else 1, horizontal=True, key=f"c_status_{i}")
