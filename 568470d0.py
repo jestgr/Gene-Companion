@@ -237,7 +237,7 @@ elif menu == "Gear":
             g["category"] = c1.text_input("", value=g.get("category", ""), key=f"gear_cat_{i}", label_visibility="collapsed")
             c2.markdown("<div class='smalllabel'>Location</div>", unsafe_allow_html=True)
             g["location"] = c2.text_input("", value=g.get("location", ""), key=f"gear_loc_{i}", label_visibility="collapsed")
-            st.markdown("</div>", unsafe_allow_html=True))
+            st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("Collapse all gear"):
         for g in data["gear"]:
