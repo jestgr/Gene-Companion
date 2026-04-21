@@ -77,6 +77,28 @@ html, body, [class*='css'] {{
   background: linear-gradient(180deg, rgba(168,213,186,0.10), rgba(255,255,255,0.0));
   color: var(--text);
 }}
+.stButton > button {
+    padding: 0.20rem 0.45rem !important;
+    min-height: 1.9rem !important;
+    font-size: 0.82rem !important;
+    border-radius: 999px !important;
+}
+.rowcard {
+    padding: 0.35rem 0.45rem !important;
+    margin-bottom: 0.30rem !important;
+}
+.itemtext {
+    font-size: 0.95rem !important;
+    line-height: 1.05 !important;
+}
+.gearpanel {
+    margin-top: 0.30rem !important;
+    padding: 0.40rem !important;
+}
+.smalllabel {
+    font-size: 0.74rem !important;
+    margin-bottom: 0.08rem !important;
+}
 .stButton > button {{
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -152,26 +174,26 @@ if menu == "Checklists":
         st.rerun()
 
     for i, item in enumerate(items):
-        st.markdown("<div class='rowcard'>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns([0.10, 0.72, 0.18], vertical_alignment="center")
-        done = c1.checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
-        item["done"] = done
-        c2.markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
-        if c3.button("Edit", key=f"edit_{selected}_{i}"):
-            st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
-        if st.session_state.edit_open.get(f"{selected}_{i}"):
-            e1, e2, e3 = st.columns([0.72, 0.14, 0.14], vertical_alignment="center")
-            edited = e1.text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
-            if e2.button("Save", key=f"save_{selected}_{i}") and edited.strip():
-                item["text"] = edited.strip()
-                st.session_state.edit_open.pop(f"{selected}_{i}", None)
-                save_data()
-                st.rerun()
-            if e3.button("Del", key=f"del_{selected}_{i}"):
-                items.pop(i)
-                st.session_state.edit_open.pop(f"{selected}_{i}", None)
-                save_data()
-                st.rerun()
+    row = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
+    done = row[0].checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
+    item["done"] = done
+    row[1].markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
+    if row[2].button("E", key=f"edit_{selected}_{i}"):
+        st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
+
+    if st.session_state.edit_open.get(f"{selected}_{i}"):
+        e1, e2 = st.columns([0.85, 0.15], vertical_alignment="center")
+        edited = e1.text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
+        if e2.button("X", key=f"del_{selected}_{i}"):
+            items.pop(i)
+            st.session_state.edit_open.pop(f"{selected}_{i}", None)
+            save_data()
+            st.rerun()
+        if st.button("Save", key=f"save_{selected}_{i}") and edited.strip():
+            item["text"] = edited.strip()
+            st.session_state.edit_open.pop(f"{selected}_{i}", None)
+            save_data()
+            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
     a, b = st.columns(2)
@@ -196,28 +218,26 @@ elif menu == "Gear":
         st.rerun()
 
     for i, g in enumerate(data["gear"]):
-        st.markdown("<div class='rowcard'>", unsafe_allow_html=True)
-        top = st.columns([0.10, 0.80, 0.10], vertical_alignment="center")
-        g["packed"] = top[0].checkbox("", value=g.get("packed", False), key=f"gear_packed_{i}", label_visibility="collapsed")
-        if top[1].button(g.get("item", ""), key=f"gear_toggle_{i}"):
-            g["open"] = not g.get("open", False)
-            save_data()
-            st.rerun()
-        if top[2].button("Del", key=f"gear_del_{i}"):
-            data["gear"].pop(i)
-            save_data()
-            st.rerun()
+    row = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
+    g["packed"] = row[0].checkbox("", value=g.get("packed", False), key=f"gear_packed_{i}", label_visibility="collapsed")
+    if row[1].button(g.get("item", ""), key=f"gear_toggle_{i}"):
+        g["open"] = not g.get("open", False)
+        save_data()
+        st.rerun()
+    if row[2].button("X", key=f"gear_del_{i}"):
+        data["gear"].pop(i)
+        save_data()
+        st.rerun()
 
-        if g.get("open", False):
+    if g.get("open", False):
+        with st.container():
             st.markdown("<div class='gearpanel'>", unsafe_allow_html=True)
-            g1, g2 = st.columns(2, vertical_alignment="center")
-            g1.markdown("<div class='smalllabel'>Category</div>", unsafe_allow_html=True)
-            g["category"] = g1.text_input("", value=g.get("category", ""), key=f"gear_cat_{i}", label_visibility="collapsed")
-            g2.markdown("<div class='smalllabel'>Location</div>", unsafe_allow_html=True)
-            g["location"] = g2.text_input("", value=g.get("location", ""), key=f"gear_loc_{i}", label_visibility="collapsed")
-            st.markdown("<span class='pill'>Tap the item again to collapse</span>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            c1.markdown("<div class='smalllabel'>Category</div>", unsafe_allow_html=True)
+            g["category"] = c1.text_input("", value=g.get("category", ""), key=f"gear_cat_{i}", label_visibility="collapsed")
+            c2.markdown("<div class='smalllabel'>Location</div>", unsafe_allow_html=True)
+            g["location"] = c2.text_input("", value=g.get("location", ""), key=f"gear_loc_{i}", label_visibility="collapsed")
+            st.markdown("</div>", unsafe_allow_html=True))
 
     if st.button("Collapse all gear"):
         for g in data["gear"]:
