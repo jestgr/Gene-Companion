@@ -4,7 +4,7 @@ import streamlit as st
 
 st.set_page_config(page_title="GeoPro Camp Companion", page_icon="🏕️", layout="centered")
 DATA_FILE = Path('output/geopro_data.json')
-DEFAULT_VERSION = "0.4 minimalist compact persistent"
+DEFAULT_VERSION = "0.6 polished compact"
 
 DEFAULT_DATA = {
     "version": DEFAULT_VERSION,
@@ -21,16 +21,15 @@ DEFAULT_DATA = {
         {"item": "Sewer hose", "location": "Rear storage", "category": "Sewer", "packed": False, "open": False},
         {"item": "Wheel chocks", "location": "Front bin", "category": "Safety", "packed": False, "open": False},
     ],
-    "campgrounds": [
-        {"name": "", "status": "Want to visit", "hookups": "", "level": "", "notes": ""}
-    ],
+    "campgrounds": [{"name": "", "status": "Want to visit", "hookups": "", "level": "", "notes": ""}],
 }
 
 SAGE = "#A8D5BA"
 CANTALOUPE = "#E8B4A3"
-BORDER = "rgba(31,41,55,0.10)"
+BORDER = "rgba(31,41,55,0.12)"
 TEXT = "#1F2937"
 MUTED = "#6B7280"
+CARD_BG = "rgba(255,255,255,0.86)"
 
 
 def deep_copy(obj):
@@ -54,22 +53,14 @@ def save_data():
     DATA_FILE.write_text(json.dumps(st.session_state.data, indent=2))
 
 
-def reset_defaults():
-    st.session_state.data = deep_copy(DEFAULT_DATA)
-    save_data()
-
-
 if "data" not in st.session_state:
     st.session_state.data = load_data()
 if "edit_open" not in st.session_state:
     st.session_state.edit_open = {}
-if "theme" not in st.session_state:
-    st.session_state.theme = "Light"
-
 
 data = st.session_state.data
 
-THEME_CSS = f"""
+st.markdown(f"""
 <style>
 :root {{
   --sage: {SAGE};
@@ -77,23 +68,21 @@ THEME_CSS = f"""
   --border: {BORDER};
   --text: {TEXT};
   --muted: {MUTED};
+  --card: {CARD_BG};
 }}
 html, body, [class*='css'] {{
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }}
 .stApp {{
-  background: linear-gradient(180deg, rgba(168,213,186,0.12), rgba(255,255,255,0.0));
+  background: linear-gradient(180deg, rgba(168,213,186,0.10), rgba(255,255,255,0.0));
   color: var(--text);
-}}
-[data-testid='stRadio'] label, [data-testid='stSelectbox'] label, [data-testid='stTextInput'] label, [data-testid='stTextArea'] label {{
-  font-size: 0.9rem;
 }}
 .stButton > button {{
   border-radius: 999px;
   border: 1px solid var(--border);
   background: white;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.95rem;
+  padding: 0.32rem 0.72rem;
+  font-size: 0.93rem;
 }}
 .stButton > button:hover {{
   border-color: var(--sage);
@@ -107,48 +96,55 @@ button[kind='primary'] {{
 button[kind='primary']:hover {{
   background: var(--cantaloupe) !important;
 }}
-[data-testid='stCheckbox'] label {{
-  gap: 0.25rem;
-}}
-.compact-item {{
-  font-size: 1rem;
-  line-height: 1.25;
-}}
-.small-muted {{
-  color: var(--muted);
-  font-size: 0.88rem;
-}}
-.card {{
+.rowcard {{
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 0.7rem 0.75rem;
-  margin-bottom: 0.5rem;
-  background: rgba(255,255,255,0.78);
+  border-radius: 18px;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.45rem;
+  background: var(--card);
   box-shadow: 0 1px 8px rgba(0,0,0,0.03);
 }}
-.tight button {{
-  padding: 0.2rem 0.5rem !important;
-  font-size: 0.9rem !important;
-  min-height: 2rem !important;
-  border-radius: 999px !important;
+.itemtext {{
+  font-size: 1rem;
+  line-height: 1.2;
+  flex: 1;
+  word-break: break-word;
 }}
-hr {{
-  margin: 0.5rem 0;
+.itemdone {{
+  color: #9CA3AF;
+  text-decoration: none;
+}}
+.gearpanel {{
+  margin-top: 0.5rem;
+  padding: 0.55rem;
+  border-radius: 16px;
+  border: 1px solid rgba(168,213,186,0.35);
+  background: rgba(168,213,186,0.08);
+}}
+.smalllabel {{
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-bottom: 0.15rem;
+}}
+.pill {{
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(232,180,163,0.16);
+  color: #6b4e45;
+  font-size: 0.8rem;
 }}
 </style>
-"""
+""", unsafe_allow_html=True)
 
-st.markdown(THEME_CSS, unsafe_allow_html=True)
 st.title("🏕️ GeoPro Camp Companion")
 st.caption(f"Version {data.get('version', DEFAULT_VERSION)} • autosaves locally")
-
 menu = st.radio("Go to", ["Checklists", "Gear", "Campgrounds", "About"], horizontal=True, label_visibility="collapsed")
 
 if menu == "Checklists":
     st.subheader("Checklists")
     selected = st.selectbox("List", list(data["checklists"].keys()), label_visibility="collapsed")
     items = data["checklists"][selected]
-
     new_item = st.text_input("Add item", placeholder="Add new checklist item")
     if st.button("Add item", type="primary") and new_item.strip():
         items.append({"text": new_item.strip(), "done": False})
@@ -156,30 +152,30 @@ if menu == "Checklists":
         st.rerun()
 
     for i, item in enumerate(items):
-        with st.container(border=True):
-            cols = st.columns([0.12, 0.70, 0.18], vertical_alignment="center")
-            done = cols[0].checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
-            item["done"] = done
-            cols[1].markdown(f"<div class='compact-item' style='color:#9CA3AF;'>{item['text']}</div>" if done else f"<div class='compact-item'>{item['text']}</div>", unsafe_allow_html=True)
-            if cols[2].button("Edit", key=f"edit_{selected}_{i}"):
-                st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
+        st.markdown("<div class='rowcard'>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns([0.10, 0.72, 0.18], vertical_alignment="center")
+        done = c1.checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
+        item["done"] = done
+        c2.markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
+        if c3.button("Edit", key=f"edit_{selected}_{i}"):
+            st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
+        if st.session_state.edit_open.get(f"{selected}_{i}"):
+            e1, e2, e3 = st.columns([0.72, 0.14, 0.14], vertical_alignment="center")
+            edited = e1.text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
+            if e2.button("Save", key=f"save_{selected}_{i}") and edited.strip():
+                item["text"] = edited.strip()
+                st.session_state.edit_open.pop(f"{selected}_{i}", None)
+                save_data()
+                st.rerun()
+            if e3.button("Del", key=f"del_{selected}_{i}"):
+                items.pop(i)
+                st.session_state.edit_open.pop(f"{selected}_{i}", None)
+                save_data()
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-            if st.session_state.edit_open.get(f"{selected}_{i}"):
-                edit_cols = st.columns([0.72, 0.14, 0.14], vertical_alignment="center")
-                edited = edit_cols[0].text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
-                if edit_cols[1].button("Save", key=f"save_{selected}_{i}") and edited.strip():
-                    item["text"] = edited.strip()
-                    st.session_state.edit_open.pop(f"{selected}_{i}", None)
-                    save_data()
-                    st.rerun()
-                if edit_cols[2].button("Del", key=f"del_{selected}_{i}"):
-                    items.pop(i)
-                    st.session_state.edit_open.pop(f"{selected}_{i}", None)
-                    save_data()
-                    st.rerun()
-
-    c1, c2 = st.columns(2)
-    if c1.button("Clear checks"):
+    a, b = st.columns(2)
+    if a.button("Clear checks"):
         for item in items:
             item["done"] = False
         for k in list(st.session_state.keys()):
@@ -187,7 +183,7 @@ if menu == "Checklists":
                 st.session_state[k] = False
         save_data()
         st.rerun()
-    if c2.button("Reset list"):
+    if b.button("Reset list"):
         st.session_state.data["checklists"][selected] = deep_copy(DEFAULT_DATA["checklists"][selected])
         save_data()
         st.rerun()
@@ -200,22 +196,28 @@ elif menu == "Gear":
         st.rerun()
 
     for i, g in enumerate(data["gear"]):
-        with st.container(border=True):
-            top = st.columns([0.12, 0.70, 0.18], vertical_alignment="center")
-            g["packed"] = top[0].checkbox("", value=g.get("packed", False), key=f"gear_packed_{i}", label_visibility="collapsed")
-            if top[1].button(g.get("item", ""), key=f"gear_toggle_{i}"):
-                g["open"] = not g.get("open", False)
-                save_data()
-                st.rerun()
-            if top[2].button("Del", key=f"gear_del_{i}"):
-                data["gear"].pop(i)
-                save_data()
-                st.rerun()
+        st.markdown("<div class='rowcard'>", unsafe_allow_html=True)
+        top = st.columns([0.10, 0.80, 0.10], vertical_alignment="center")
+        g["packed"] = top[0].checkbox("", value=g.get("packed", False), key=f"gear_packed_{i}", label_visibility="collapsed")
+        if top[1].button(g.get("item", ""), key=f"gear_toggle_{i}"):
+            g["open"] = not g.get("open", False)
+            save_data()
+            st.rerun()
+        if top[2].button("Del", key=f"gear_del_{i}"):
+            data["gear"].pop(i)
+            save_data()
+            st.rerun()
 
-            if g.get("open", False):
-                left, right = st.columns(2, vertical_alignment="center")
-                g["category"] = left.text_input("Category", value=g.get("category", ""), key=f"gear_cat_{i}")
-                g["location"] = right.text_input("Location", value=g.get("location", ""), key=f"gear_loc_{i}")
+        if g.get("open", False):
+            st.markdown("<div class='gearpanel'>", unsafe_allow_html=True)
+            g1, g2 = st.columns(2, vertical_alignment="center")
+            g1.markdown("<div class='smalllabel'>Category</div>", unsafe_allow_html=True)
+            g["category"] = g1.text_input("", value=g.get("category", ""), key=f"gear_cat_{i}", label_visibility="collapsed")
+            g2.markdown("<div class='smalllabel'>Location</div>", unsafe_allow_html=True)
+            g["location"] = g2.text_input("", value=g.get("location", ""), key=f"gear_loc_{i}", label_visibility="collapsed")
+            st.markdown("<span class='pill'>Tap the item again to collapse</span>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("Collapse all gear"):
         for g in data["gear"]:
@@ -233,9 +235,9 @@ elif menu == "Campgrounds":
         with st.container(border=True):
             cg["name"] = st.text_input("Name", value=cg.get("name", ""), key=f"c_name_{i}")
             cg["status"] = st.radio("Status", ["Want to visit", "Visited"], index=0 if cg.get("status", "Want to visit") == "Want to visit" else 1, horizontal=True, key=f"c_status_{i}")
-            a, b = st.columns(2)
-            cg["hookups"] = a.text_input("Hookups", value=cg.get("hookups", ""), key=f"c_hookups_{i}")
-            cg["level"] = b.text_input("Level", value=cg.get("level", ""), key=f"c_level_{i}")
+            x, y = st.columns(2)
+            cg["hookups"] = x.text_input("Hookups", value=cg.get("hookups", ""), key=f"c_hookups_{i}")
+            cg["level"] = y.text_input("Level", value=cg.get("level", ""), key=f"c_level_{i}")
             cg["notes"] = st.text_area("Notes", value=cg.get("notes", ""), key=f"c_notes_{i}")
             if st.button("Remove campground", key=f"c_del_{i}"):
                 data["campgrounds"].pop(i)
@@ -244,7 +246,7 @@ elif menu == "Campgrounds":
 
 else:
     st.subheader("About")
-    st.write("This build is minimalist, compact, and persistent. It uses calm sage and cantaloupe accents, with rounded controls and tap-to-expand details.")
+    st.write("Minimalist, compact, and persistent. Checklist rows are one line; gear expands inline on tap.")
     st.write("Data saves to output/geopro_data.json in the app environment.")
     if st.button("Force save now"):
         save_data()
