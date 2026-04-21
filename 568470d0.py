@@ -174,28 +174,28 @@ if menu == "Checklists":
         st.rerun()
 
     for i, item in enumerate(items):
-    row = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
-    done = row[0].checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
-    item["done"] = done
-    row[1].markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
-    if row[2].button("E", key=f"edit_{selected}_{i}"):
-        st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
+        row = st.columns([0.08, 0.78, 0.14], vertical_alignment="center")
+        done = row[0].checkbox("", value=item.get("done", False), key=f"chk_{selected}_{i}", label_visibility="collapsed")
+        item["done"] = done
+        row[1].markdown(f"<div class='itemtext {'itemdone' if done else ''}'>{item['text']}</div>", unsafe_allow_html=True)
+        if row[2].button("E", key=f"edit_{selected}_{i}"):
+            st.session_state.edit_open[f"{selected}_{i}"] = not st.session_state.edit_open.get(f"{selected}_{i}", False)
 
-    if st.session_state.edit_open.get(f"{selected}_{i}"):
-        e1, e2 = st.columns([0.85, 0.15], vertical_alignment="center")
-        edited = e1.text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
-        if e2.button("X", key=f"del_{selected}_{i}"):
-            items.pop(i)
-            st.session_state.edit_open.pop(f"{selected}_{i}", None)
-            save_data()
-            st.rerun()
-        if st.button("Save", key=f"save_{selected}_{i}") and edited.strip():
-            item["text"] = edited.strip()
-            st.session_state.edit_open.pop(f"{selected}_{i}", None)
-            save_data()
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
+        if st.session_state.edit_open.get(f"{selected}_{i}"):
+            e1, e2 = st.columns([0.85, 0.15], vertical_alignment="center")
+            edited = e1.text_input("", value=item["text"], key=f"editbox_{selected}_{i}", label_visibility="collapsed")
+            if e2.button("X", key=f"del_{selected}_{i}"):
+                items.pop(i)
+                st.session_state.edit_open.pop(f"{selected}_{i}", None)
+                save_data()
+                st.rerun()
+            if st.button("Save", key=f"save_{selected}_{i}") and edited.strip():
+                item["text"] = edited.strip()
+                st.session_state.edit_open.pop(f"{selected}_{i}", None)
+                save_data()
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+ 
     a, b = st.columns(2)
     if a.button("Clear checks"):
         for item in items:
